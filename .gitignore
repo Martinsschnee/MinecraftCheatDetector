@@ -1,0 +1,23 @@
+# Windows
+Thumbs.db
+Desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.suo
+*.user
+
+# PowerShell
+*.ps1xml
+
+# Logs
+*.log
+logs/
+
+# Test outputs
+test-output/
+*.json
+
+# OS generated
+.DS_Store

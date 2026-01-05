@@ -663,4 +663,7 @@ function Invoke-CheatDetection {
 
 Invoke-CheatDetection
 
+Write-Host ""
+Read-Host "Press Enter to close..."
+
 #endregion Main

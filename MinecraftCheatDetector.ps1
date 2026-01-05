@@ -40,17 +40,16 @@ $script:CheatLogPatterns = @(
     '\[Inject\]', 'FastPlace', 'FastBreak', 'Vape', 'Killaura', 'KillauraLegit',
     'TriggerBot', 'Wurst', 'Aristois', 'LiquidBounce', 'Meteor', 'Baritone',
     'YesCheat', 'GhostMode', 'AutoClicker', 'Reach', 'Velocity', 'AntiKnockback',
-    'Criticals', 'NoFall', 'Spider', 'Jesus', 'Fly\s', 'Speed\s', 'Nuker',
-    'X-?ray', 'ESP', 'Tracers', 'FullBright', 'AutoFish', 'AutoMine',
-    'BHop', 'Bunnyhop', 'NoSlowdown', 'FastEat', 'AutoArmor', 'ChestStealer',
-    'Scaffold', 'Tower', 'AntiFire', 'AntiVoid', 'Phase', 'Freecam',
-    '\[FDP\]', '\[Meteor\]', '\[Wurst\]', 'client\.brand.*(?!vanilla)'
+    'Criticals', 'NoFall', 'Spider', 'Jesus', 'Nuker', 'X-?ray', 'ESP', 'Tracers',
+    'BHop', 'Bunnyhop', 'NoSlowdown', 'ChestStealer', 'Scaffold',
+    'AntiFire', 'AntiVoid', 'Phase', 'Freecam', '\[FDP\]', '\[Wurst\]', '\[Meteor\]'
 )
 
 $script:SuspiciousFilePatterns = @(
     "vape", "wurst", "aristois", "meteor", "liquidbounce", "doomsday", "fdp",
-    "hack", "cheat", "inject", "bypass", "ghost", "client", "killaura",
-    "autoclicker", "clicker", "triggerbot", "aimbot", "reach", "velocity"
+    "hack", "cheat", "inject", "bypass", "killaura", "ghostclient",
+    "autoclicker", "clicker", "triggerbot", "aimbot", "reach", "velocity",
+    "xray", "nuker", "bhop", "noclip", "aimassist", "hitbox"
 )
 
 $script:KnownCheatHashes = @{

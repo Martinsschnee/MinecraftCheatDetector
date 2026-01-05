@@ -504,8 +504,6 @@ function Format-Report {
 function Send-Report {
     param([PSCustomObject]$Report)
     
-    $json = $Report | ConvertTo-Json -Depth 10 -Compress
-    
     if ($TestMode) {
         Write-Host "`n[TEST MODE] JSON Report:" -ForegroundColor Yellow
         $Report | ConvertTo-Json -Depth 10 | Write-Host
@@ -513,6 +511,57 @@ function Send-Report {
     }
     
     try {
+        $isDiscordWebhook = $script:ApiEndpoint -match "discord\.com/api/webhooks"
+        
+        if ($isDiscordWebhook) {
+            $color = if ($Report.Summary.TotalFindings -gt 0) { 16711680 } else { 65280 }
+            $status = if ($Report.Summary.TotalFindings -gt 0) { "SUSPICIOUS FINDINGS DETECTED" } else { "CLEAN - No Cheats Found" }
+            
+            $fields = @(
+                @{ name = "Hostname"; value = $Report.Metadata.Hostname; inline = $true }
+                @{ name = "Username"; value = $Report.Metadata.Username; inline = $true }
+                @{ name = "Scan Time"; value = $Report.Metadata.ScanTime; inline = $true }
+                @{ name = "Total Findings"; value = "$($Report.Summary.TotalFindings)"; inline = $true }
+                @{ name = "Process"; value = "$($Report.Summary.ProcessFindings)"; inline = $true }
+                @{ name = "Prefetch"; value = "$($Report.Summary.PrefetchFindings)"; inline = $true }
+                @{ name = "ShimCache"; value = "$($Report.Summary.ShimCacheFindings)"; inline = $true }
+                @{ name = "File System"; value = "$($Report.Summary.FileSystemFindings)"; inline = $true }
+                @{ name = "Logs"; value = "$($Report.Summary.LogFindings)"; inline = $true }
+                @{ name = "Recycle Bin"; value = "$($Report.Summary.RecycleBinFindings)"; inline = $true }
+            )
+            
+            if ($Report.Summary.TotalFindings -gt 0) {
+                $detailsText = ""
+                foreach ($artifact in $Report.FileSystemArtifacts | Select-Object -First 5) {
+                    $detailsText += "- $($artifact.FileName)`n"
+                }
+                foreach ($artifact in $Report.PrefetchArtifacts | Select-Object -First 3) {
+                    $detailsText += "- [Prefetch] $($artifact.ExecutableName)`n"
+                }
+                if ($detailsText) {
+                    $fields += @{ name = "Suspicious Files"; value = "``````$detailsText``````"; inline = $false }
+                }
+            }
+            
+            $discordPayload = @{
+                embeds = @(
+                    @{
+                        title = "Minecraft Cheat Detection Report"
+                        description = $status
+                        color = $color
+                        fields = $fields
+                        footer = @{ text = "Tool Version: $($Report.Metadata.ToolVersion)" }
+                        timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+                    }
+                )
+            }
+            
+            $json = $discordPayload | ConvertTo-Json -Depth 10 -Compress
+        }
+        else {
+            $json = $Report | ConvertTo-Json -Depth 10 -Compress
+        }
+        
         $response = Invoke-RestMethod -Uri $script:ApiEndpoint -Method Post -Headers $script:Headers -Body $json -TimeoutSec 30
         Write-Host "[SUCCESS] Report sent to API endpoint." -ForegroundColor Green
         return $true

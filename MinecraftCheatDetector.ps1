@@ -514,8 +514,8 @@ function Send-Report {
         
         if ($isDiscordWebhook) {
             $color = if ($Report.Summary.TotalFindings -gt 0) { 16711680 } else { 65280 }
-            $statusEmoji = if ($Report.Summary.TotalFindings -gt 0) { "🚨" } else { "✅" }
-            $status = if ($Report.Summary.TotalFindings -gt 0) { "$statusEmoji SUSPICIOUS FINDINGS DETECTED" } else { "$statusEmoji CLEAN - No Cheats Found" }
+            $statusIcon = if ($Report.Summary.TotalFindings -gt 0) { "[!]" } else { "[OK]" }
+            $status = if ($Report.Summary.TotalFindings -gt 0) { "$statusIcon SUSPICIOUS FINDINGS DETECTED" } else { "$statusIcon CLEAN - No Cheats Found" }
             
             $summaryText = @"
 **PC:** ``$($Report.Metadata.Hostname)``
@@ -524,58 +524,76 @@ function Send-Report {
 "@
             
             $statsText = @"
-📊 **Scan Results:**
-• Process: ``$($Report.Summary.ProcessFindings)``
-• Prefetch: ``$($Report.Summary.PrefetchFindings)``
-• ShimCache: ``$($Report.Summary.ShimCacheFindings)``
-• File System: ``$($Report.Summary.FileSystemFindings)``
-• Logs: ``$($Report.Summary.LogFindings)``
-• Recycle Bin: ``$($Report.Summary.RecycleBinFindings)``
+**Scan Results:**
+- Process: ``$($Report.Summary.ProcessFindings)``
+- Prefetch: ``$($Report.Summary.PrefetchFindings)``
+- ShimCache: ``$($Report.Summary.ShimCacheFindings)``
+- File System: ``$($Report.Summary.FileSystemFindings)``
+- Logs: ``$($Report.Summary.LogFindings)``
+- Recycle Bin: ``$($Report.Summary.RecycleBinFindings)``
 **Total: ``$($Report.Summary.TotalFindings)``**
 "@
             
             $fields = @(
-                @{ name = "📋 System Info"; value = $summaryText; inline = $false }
-                @{ name = "📈 Statistics"; value = $statsText; inline = $false }
+                @{ name = "[INFO] System"; value = $summaryText; inline = $false }
+                @{ name = "[STATS] Results"; value = $statsText; inline = $false }
             )
             
             if ($Report.FileSystemArtifacts.Count -gt 0) {
                 $fileText = ""
-                foreach ($artifact in $Report.FileSystemArtifacts | Select-Object -First 10) {
+                $uniqueFiles = $Report.FileSystemArtifacts | Sort-Object FileName -Unique | Select-Object -First 10
+                foreach ($artifact in $uniqueFiles) {
                     $launcher = if ($artifact.Launcher) { "[$($artifact.Launcher)] " } else { "" }
-                    $fileText += "• $launcher``$($artifact.FileName)```n"
+                    $modDate = if ($artifact.LastModified) { 
+                        $dt = [DateTime]::Parse($artifact.LastModified)
+                        $dt.ToString("dd.MM.yyyy HH:mm")
+                    } else { "unknown" }
+                    $fileText += "- $launcher``$($artifact.FileName)`` ($modDate)`n"
                 }
-                $fields += @{ name = "📁 File System Artifacts"; value = $fileText; inline = $false }
+                $fields += @{ name = "[FILES] Suspicious Files"; value = $fileText; inline = $false }
             }
             
             if ($Report.PrefetchArtifacts.Count -gt 0) {
                 $prefetchText = ""
-                foreach ($artifact in $Report.PrefetchArtifacts | Select-Object -First 10) {
-                    $prefetchText += "• ``$($artifact.ExecutableName)`` - $($artifact.LastExecuted)`n"
+                $uniquePrefetch = $Report.PrefetchArtifacts | Sort-Object ExecutableName -Unique | Select-Object -First 10
+                foreach ($artifact in $uniquePrefetch) {
+                    $execDate = if ($artifact.LastExecuted) {
+                        $dt = [DateTime]::Parse($artifact.LastExecuted)
+                        $dt.ToString("dd.MM.yyyy HH:mm")
+                    } else { "unknown" }
+                    $prefetchText += "- ``$($artifact.ExecutableName)`` ($execDate)`n"
                 }
-                $fields += @{ name = "⚡ Prefetch Artifacts"; value = $prefetchText; inline = $false }
+                $fields += @{ name = "[PREFETCH] Executed Programs"; value = $prefetchText; inline = $false }
             }
             
             if ($Report.LogArtifacts.Count -gt 0) {
                 $logText = ""
-                foreach ($artifact in $Report.LogArtifacts | Select-Object -First 5) {
-                    $logText += "• **$($artifact.MatchedPattern)**: ``$($artifact.MatchedLine.Substring(0, [Math]::Min(80, $artifact.MatchedLine.Length)))...```n"
+                $uniqueLogs = $Report.LogArtifacts | Sort-Object MatchedPattern -Unique | Select-Object -First 5
+                foreach ($artifact in $uniqueLogs) {
+                    $linePreview = $artifact.MatchedLine
+                    if ($linePreview.Length -gt 60) { $linePreview = $linePreview.Substring(0, 60) + "..." }
+                    $logText += "- **$($artifact.MatchedPattern)**: ``$linePreview```n"
                 }
-                $fields += @{ name = "📜 Log Artifacts"; value = $logText; inline = $false }
+                $fields += @{ name = "[LOGS] Detected Keywords"; value = $logText; inline = $false }
             }
             
             if ($Report.RecycleBinArtifacts.Count -gt 0) {
                 $binText = ""
-                foreach ($artifact in $Report.RecycleBinArtifacts | Select-Object -First 5) {
-                    $binText += "• ``$($artifact.FileName)`` (deleted: $($artifact.DeletedAt))`n"
+                $uniqueBin = $Report.RecycleBinArtifacts | Sort-Object FileName -Unique | Select-Object -First 5
+                foreach ($artifact in $uniqueBin) {
+                    $delDate = if ($artifact.DeletedAt) {
+                        $dt = [DateTime]::Parse($artifact.DeletedAt)
+                        $dt.ToString("dd.MM.yyyy HH:mm")
+                    } else { "unknown" }
+                    $binText += "- ``$($artifact.FileName)`` (deleted: $delDate)`n"
                 }
-                $fields += @{ name = "🗑️ Recycle Bin"; value = $binText; inline = $false }
+                $fields += @{ name = "[DELETED] Recycle Bin"; value = $binText; inline = $false }
             }
             
             $discordPayload = @{
                 embeds = @(
                     @{
-                        title = "🎮 Minecraft Cheat Detection Report"
+                        title = "Minecraft Cheat Detection Report"
                         description = $status
                         color = $color
                         fields = $fields

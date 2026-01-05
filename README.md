@@ -30,11 +30,19 @@
 - PowerShell 5.1 or higher
 - **Administrator privileges** (required for Prefetch/ShimCache access)
 
-## Installation
+## Quick Start (One-Liner)
+
+Run this command in PowerShell (opens as Administrator automatically):
+
+```powershell
+Start-Process powershell -Verb RunAs -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command `"irm https://raw.githubusercontent.com/Martinsschnee/MinecraftCheatDetector/main/MinecraftCheatDetector.ps1 | iex`""
+```
+
+## Installation (Manual)
 
 ```powershell
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/MinecraftCheatDetector.git
+git clone https://github.com/Martinsschnee/MinecraftCheatDetector.git
 cd MinecraftCheatDetector
 ```
 
